@@ -1,0 +1,29 @@
+act wish, enter, leave: Nat;
+    get_flag_r, get_flag_s, get_flag,
+      set_flag_r, set_flag_s, set_flag: Nat # Bool;
+
+map other: Nat -> Nat;
+eqn other(0) = 1;
+    other(1) = 0;
+
+proc
+  Flag(b: Bool) =
+    sum id: Nat. (
+      sum b': Bool. set_flag_r(id, b').Flag(b') +
+      get_flag_s(id, b).Flag(b)
+    );
+
+  Process(id: Nat) =
+    wish(id).
+    get_flag_r(id, false).  % while flag {}
+    set_flag_s(id, true).   % flag = true
+    enter(id).leave(id).    % # sección crítica
+    set_flag_s(id, false).  % flag = false
+    Process(id);
+
+init
+  hide({ get_flag, set_flag },
+    allow({ wish, enter, leave, get_flag, set_flag},
+      comm({ get_flag_r | get_flag_s -> get_flag,
+             set_flag_r | set_flag_s -> set_flag },
+      Process(0) || Process(1) || Flag(true))));    % INICIALIZACIÓN ERRONEA
